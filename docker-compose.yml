@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  telegram_bot:
+    build:
+      context: .
+      dockerfile: ./bot/Dockerfile
+    restart: always
+    container_name: telegram_bot
+    volumes:
+      - telegram_bot_data:/data
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    container_name: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - smedia_bot_pgdata:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 80s
+
+volumes:
+  smedia_bot_pgdata:
+    name: smedia_bot_pgdata
+  telegram_bot_data:
+    name: telegram_bot_data_volume
